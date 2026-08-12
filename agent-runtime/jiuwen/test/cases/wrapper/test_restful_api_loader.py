@@ -86,6 +86,13 @@ class TestConvertIrToCard:
         assert card.is_from_ir is True
         assert len(card.params) == 1
         assert card.params[0].name == "city"
+        assert card.input_params == {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "city name"}
+            },
+            "required": ["city"],
+        }
         assert len(card.response) == 1
         assert card.response[0].name == "result"
         assert card.principle == "test principle"
@@ -163,6 +170,96 @@ class TestConvertIrToCard:
         card = convert_ir_to_card(ir_data)
         assert card.params == []
         assert card.response == []
+        assert card.input_params == {"type": "object", "properties": {}}
+
+    def test_input_schema_excludes_headers_and_hidden_params(self):
+        ir_data = _make_valid_ir_data(
+            arguments=[
+                {
+                    "name": "city",
+                    "description": "city name",
+                    "type": "string",
+                    "required": True,
+                    "method": "Query",
+                },
+                {
+                    "name": "Authorization",
+                    "description": "auth header",
+                    "type": "string",
+                    "required": True,
+                    "method": "Headers",
+                },
+                {
+                    "name": "internal",
+                    "description": "injected value",
+                    "type": "string",
+                    "required": False,
+                    "visible": False,
+                    "method": "Body",
+                },
+            ]
+        )
+
+        card = convert_ir_to_card(ir_data)
+
+        assert set(card.input_params["properties"]) == {"city"}
+        assert card.input_params["required"] == ["city"]
+
+    def test_input_schema_preserves_nested_types_and_defaults(self):
+        ir_data = _make_valid_ir_data(
+            arguments=[
+                {
+                    "name": "filters",
+                    "description": "query filters",
+                    "type": "object",
+                    "required": True,
+                    "method": "Body",
+                    "schema": [
+                        {
+                            "name": "codes",
+                            "description": "area codes",
+                            "type": "array<string>",
+                            "required": True,
+                            "method": "Body",
+                        },
+                        {
+                            "name": "enabled",
+                            "description": "whether enabled",
+                            "type": "boolean",
+                            "required": False,
+                            "default_value": False,
+                            "method": "Body",
+                        },
+                    ],
+                }
+            ]
+        )
+
+        card = convert_ir_to_card(ir_data)
+
+        assert card.input_params == {
+            "type": "object",
+            "properties": {
+                "filters": {
+                    "type": "object",
+                    "properties": {
+                        "codes": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "area codes",
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "description": "whether enabled",
+                            "default": False,
+                        },
+                    },
+                    "required": ["codes"],
+                    "description": "query filters",
+                }
+            },
+            "required": ["filters"],
+        }
 
     def test_plugin_dependency_preserved(self):
         ir_data = _make_valid_ir_data(pluginDependency={"dep_key": "dep_val"})
