@@ -188,6 +188,8 @@ services:
       # 客户 Header 改写规则引擎：默认关闭，客户部署时置 true
       CUSTOMER_HEADER_ENABLED: ${CUSTOMER_HEADER_ENABLED:-false}
       CUSTOMER_HEADER_MAPPINGS: ${CUSTOMER_HEADER_MAPPINGS:-}
+      # redis json序列化最大长度
+      redis_max_string_length: ${REDIS_MAX_STRING_LENGTH:-20000000}
     depends_on:
       mysql:
         condition: service_healthy
