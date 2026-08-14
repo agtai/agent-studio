@@ -465,14 +465,21 @@ export class AddPluginModalComponent implements OnInit {
   }
 
   getPluginVersion(plugin, version_id) {
+    const requestId = (plugin.toolRequestId ?? 0) + 1;
+    plugin.toolRequestId = requestId;
     plugin.toolIsReady = false;
     this.agentRepoServe
       .getPluginVersion(plugin.plugin_id, version_id)
       .then(res => {
-        plugin.tool_info = res?.data?.request_info?.tool_info || [];
+        if (plugin.toolRequestId === requestId) {
+          plugin.tool_info = res?.data?.request_info?.tool_info || [];
+        }
       })
       .finally(() => {
-        plugin.toolIsReady = true;
+        if (plugin.toolRequestId === requestId) {
+          plugin.toolIsReady = true;
+          this.cdr.markForCheck();
+        }
       });
   }
 

@@ -319,13 +319,13 @@
           <div *ngIf="plugins.length" class="cards-wrapper">
             <div *ngFor="let plugin of plugins"
                  class="card-wrapper">
-              <div class="card" (click)="getShareTool(plugin)">
+              <div class="card share-card" (click)="getShareTool(plugin)">
                 <img
                   class="h-[40px] w-[40px]"
                   [src]="getCardIcon(plugin)"
                   alt="api"
                 />
-                <div class="w-[calc(100%-160px)]">
+                <div class="share-card-content">
                   <div class="flex items-center gap-[8px]">
                     <div
                       nz-tooltip [nzTooltipTitle]="getPluginName(plugin)" [nzTooltipOverlayClassName]="'plugin-tooltip-overlay'"
@@ -341,16 +341,19 @@
                       {{plugin.plugin_desc}}
                     </span>
                   </div>
-                  <div class="flex items-center text-[#808080]">
-                    <span class="mr-1 !text-[16px]">cloudx-action-account</span>
-                    <span class="max-w-[130px]" nz-ellipsis>
-                    {{plugin.workspace_name || plugin.workspace_id}}
+                  <div class="share-plugin-meta text-[#808080]">
+                    <span
+                      class="share-workspace-name"
+                      nz-tooltip
+                      [nzTooltipTitle]="plugin.workspace_name || plugin.workspace_id"
+                    >
+                      {{plugin.workspace_name || plugin.workspace_id}}
                     </span>
-                    <span *ngIf="plugin.version_info_list?.length" class="pl-2 pr-2">|</span>
-                      <div class="version-info-list-div"  *ngIf="plugin.version_info_list?.length">
+                    <span *ngIf="plugin.version_info_list?.length" class="share-meta-separator">|</span>
+                      <div class="version-info-list-div" *ngIf="plugin.version_info_list?.length">
                         {{'version_name'|i18nextEager}}:
                         <nz-select
-                          class="!max-w-[130px]"
+                          class="share-version-select"
                           nzBorderless
                           [(ngModel)]="plugin.last_version_id"
                           (click)="onVersionClick($event)"
