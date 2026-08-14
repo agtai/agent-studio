@@ -441,9 +441,10 @@
         [nzTotal]="totalNumber"
         nzSize="small"
         (nzPageIndexChange)="initApiList()"
-        [nzPageSize]="pageSize"
+        [(nzPageSize)]="pageSize"
         [nzShowSizeChanger]="true"
         [nzPageSizeOptions]="pageSizeOptions"
+        (nzPageSizeChange)="onPageSizeChange($event)"
       ></nz-pagination>
     </div>
   </div>
