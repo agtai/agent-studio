@@ -284,6 +284,12 @@ export class AddPluginModalComponent implements OnInit {
     }
   }
 
+  public onPageSizeChange(size: number) {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.initApiList();
+  }
+
   public countRefNum(pluginId: string, toolId: string) {
     const key = `${pluginId}#${toolId}`;
     if (this.refMap.has(key)) {
