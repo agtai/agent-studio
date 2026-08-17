@@ -28,29 +28,35 @@ export class ImportIntentModalComponent {
   @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
 
   @Input() intentId: string;
-
   @Input() intentName: string;
-
-  @Output() refreshTable = new EventEmitter<void>();
+  @Output() refreshTable = new EventEmitter<string[] | void>();
 
   constructor(
     private readonly i18n: I18NextEagerPipe,
     private readonly api: IntentPackageService,
     private commonLogic: agentCommonLogic,
     @Optional() private modalRef: NzModalRef,
-    @Optional() @Inject(NZ_MODAL_DATA) private nzData: any
+    @Optional() @Inject(NZ_MODAL_DATA) private nzData: any,
   ) {}
 
   public changeUrl = cdnAssetUrl;
 
   public uplaodFile: any = {};
 
+  public isLoading = false;
+
   /**
-   * 统一取 intentId：兼容 @Input() 直接绑定（模板中静态使用）
-   * 和 nzModalService.create 传入 nzData.context.intentId 两种调用方式。
+   * nzData shape on studio-2.0-dev: { intentId, intentName, outputs: { refreshTable } }
+   * nzData shape on studio-2.0:    { context: { intentId, intentName, outputs: { refreshTable } } }
+   * Support both for branch compatibility, plus @Input() template usage.
    */
-  private get modalContext(): { intentId?: string; intentName?: string; outputs?: { refreshTable?: (ids?: string[]) => void } } {
-    return this.nzData?.context ?? {};
+  private get modalContext(): {
+    intentId?: string;
+    intentName?: string;
+    outputs?: { refreshTable?: (ids?: string[]) => void };
+  } {
+    if (!this.nzData) return {};
+    return this.nzData.context ?? this.nzData;
   }
 
   private get effectiveIntentId(): string {
@@ -59,16 +65,6 @@ export class ImportIntentModalComponent {
 
   private get effectiveIntentName(): string {
     return this.intentName ?? this.modalContext.intentName ?? '';
-  }
-
-  /**
-   * 关闭弹窗：取消按钮、导入成功后、X 按钮（由 nz-modal 内部调用）都走这里。
-   * 必须销毁 NzModalRef，否则点取消弹窗无反应。
-   */
-  public dismiss() {
-    if (this.modalRef) {
-      this.modalRef.destroy();
-    }
   }
 
   downTemplate(): void {
@@ -85,6 +81,13 @@ export class ImportIntentModalComponent {
   uploadIntent(): void {
     this.fileInput.nativeElement.value = null;
     this.fileInput.nativeElement.click();
+  }
+
+  removeFile(): void {
+    this.uplaodFile = {};
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 
   public onUploadFile(e: Event): void {
@@ -106,12 +109,10 @@ export class ImportIntentModalComponent {
   }
 
   importIntent(): void {
-    if (!this.uplaodFile.file) {
+    if (this.isLoading || !this.uplaodFile.file) {
       return;
     }
-    const options: any = {
-      target: this.importRef?.nativeElement,
-    };
+    this.isLoading = true;
     const formData = new FormData();
     formData.append('file', this.uplaodFile.file);
     this.api
@@ -120,11 +121,18 @@ export class ImportIntentModalComponent {
         if (res.success) {
           this.dismiss();
           MessageComponent.showSuccess(this.i18n.transform('upload_success'), 3000);
-          // 兼容两种调用方式：模板 @Output 绑定 + nzModalService.create 的 nzData.context.outputs
           this.refreshTable.emit(res.intent_ids);
           this.modalContext.outputs?.refreshTable?.(res.intent_ids);
         }
       })
-      .finally(() => {});
+      .finally(() => {
+        this.isLoading = false;
+      });
+  }
+
+  dismiss() {
+    if (this.modalRef) {
+      this.modalRef.destroy();
+    }
   }
 }
