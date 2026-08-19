@@ -1087,6 +1087,7 @@ export class ControllerModalComponent
     await this.setPublishedSubAgentDetails(agentInfo.id, agentInfo.version_id);
     if (agentInfo.update) {
       agentInfo.update = null;
+      this.cd.markForCheck();
     }
     if (isUpdate) {
       this.handelSave();
@@ -1566,6 +1567,7 @@ export class ControllerModalComponent
           v.update = this.handleShowUpdatedIcon(v.id, v.version_id);
         });
       }
+      this.cd.markForCheck();
     });
   }
 
